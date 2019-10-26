@@ -42,8 +42,11 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     def delete(prefix, table, filters, returning) do
         Connection.delete(prefix, table, filters, returning)
     end
-    def insert(_prefix, _table, _header, _rows, _conflict, _returning) do
-        raise "not implemented"
+    def insert(prefix, table, header, rows, _conflict, _returning) do
+        length = length(rows)
+        source = quote_table(prefix, table)
+        values = values(header, length)
+        ["UPSERT INTO ", source, " (KEY, VALUE) ", "VALUES ", values]
     end
 
     def to_constraints(_term) do
@@ -64,5 +67,28 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     end
     defp result({:error, _reason} = tuple) do
         tuple
+    end
+
+    defp values(header, count) do
+        object = header
+        |> Enum.drop(1)
+        |> Enum.map(&{&1, "?"})
+        |> Map.new
+        |> Jason.encode!
+        |> String.replace("\"?\"", "?")
+
+        [?(, ??, ?,, object, ?)]
+        |> List.duplicate(count)
+        |> Enum.intersperse(?,)
+    end
+
+    defp quote_table(nil, name) do
+        quote_table(name)
+    end
+    defp quote_table(prefix, name) do
+        [quote_table(prefix), ?., quote_table(name)]
+    end
+    defp quote_table(name) do
+        [?`, to_string(name), ?`]
     end
 end
