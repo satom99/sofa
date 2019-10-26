@@ -67,8 +67,9 @@ defmodule Sofa.Worker do
     defp result(%{body: body}, query, state) do
         result(body, query, state)
     end
-    defp result(%{signature: nil}, query, state) do
-        result = %Result{num_rows: 1}
+    defp result(%{signature: nil, metrics: metrics}, query, state) do
+        %{mutationCount: count} = metrics
+        result = %Result{num_rows: count}
         {:ok, query, result, state}
     end
     defp result(%{signature: signature, results: results}, query, state) do
