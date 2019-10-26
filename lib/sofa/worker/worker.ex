@@ -74,7 +74,7 @@ defmodule Sofa.Worker do
     end
     defp result(%{signature: signature, results: results}, query, state) do
         fields = Map.keys(signature)
-        values = Enum.map(results, &Map.values/1)
+        values = Enum.map(results, &values(&1, fields))
         result = %Result{
             num_rows: length(values),
             columns: fields,
@@ -85,6 +85,10 @@ defmodule Sofa.Worker do
     defp result(error, _query, state) do
         message = format_error(error)
         {:error, message, state}
+    end
+
+    defp values(object, fields) do
+        Enum.map(fields, &Map.get(object, &1))
     end
 
     defp format_error(%{errors: errors}) do
