@@ -3,8 +3,8 @@ defmodule Sofa.Worker do
 
     use DBConnection
 
-    alias MyXQL.Result
-    alias Sofa.{Query, API}
+    alias Sofa.{Query, Result}
+    alias Sofa.API
 
     def connect(options) do
         {:ok, options}
