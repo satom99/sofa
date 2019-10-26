@@ -22,7 +22,6 @@ defmodule Ecto.Adapters.Couchbase.Connection do
         execution = prepare_execute(conn, nil, statement, params, options)
         result(execution)
     end
-
     def stream(_conn, _statement, _params, _options) do
         raise "not implemented"
     end
@@ -50,7 +49,6 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     def to_constraints(_term) do
         []
     end
-
     def ddl_logs(_term) do
         raise "not implemented"
     end
