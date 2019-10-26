@@ -11,8 +11,18 @@ defmodule Ecto.Adapters.Couchbase do
     end
 
     def insert(adapter, schema, params, conflict, returning, options) do
-        primary = Keyword.take(params, [:id])
-        params = Enum.concat(primary, params)
+        params = primarize(params)
         super(adapter, schema, params, conflict, returning, options)
+    end
+    def insert_all(adapter, schema, header, params, conflict, returning, options) do
+        header = [:id | header]
+        params = Enum.map(params, &primarize/1)
+        super(adapter, schema, header, params, conflict, returning, options)
+    end
+
+    defp primarize(params) do
+        params
+        |> Keyword.take([:id])
+        |> Enum.concat(params)
     end
 end
