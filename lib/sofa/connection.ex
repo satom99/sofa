@@ -7,7 +7,6 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     alias Sofa.Query
 
     def child_spec(options) do
-        IO.inspect {:child_spec, options}
         Sofa.child_spec(options)
     end
 
