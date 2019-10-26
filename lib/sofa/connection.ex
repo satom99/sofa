@@ -47,7 +47,7 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     end
 
     def to_constraints(_term) do
-        []
+        raise "not implemented"
     end
     def ddl_logs(_term) do
         raise "not implemented"
