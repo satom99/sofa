@@ -15,10 +15,11 @@ defmodule Sofa.MixProject do
 		[
 			{:ecto, ">= 3.1.0"},
 			{:myxql, ">= 0.2.0"},
+			{:jason, ">= 1.0.0"},
 			{:ecto_sql, ">= 3.1.0"},
-			{:db_connection, ">= 0.1.0"},
 			{:httpoison, ">= 0.7.0"},
-			{:jason, ">= 1.0.0"}
+			{:db_connection, ">= 0.1.0"},
+			{:ex_doc, ">= 0.5.1", only: :dev}
 		]
 	end
 end
