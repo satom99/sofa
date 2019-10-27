@@ -9,9 +9,6 @@ defmodule Sofa.Filter.Validator do
     @types %{op: :string, path: :string}
     @fields Map.keys(@types)
 
-    # string keys +
-    # string values
-
     def cast(object) do
         case validate(object) do
             %{valid?: true} = changeset ->
