@@ -48,10 +48,10 @@ defmodule Ecto.Adapters.Couchbase.Connection do
         values = values(header, length)
         ["UPSERT INTO ", source, " (KEY, VALUE) ", "VALUES ", values]
     end
-
     def to_constraints(_term) do
         []
     end
+    
     def ddl_logs(_term) do
         raise "not implemented"
     end
