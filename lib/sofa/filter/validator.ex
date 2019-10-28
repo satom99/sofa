@@ -24,13 +24,13 @@ defmodule Sofa.Filter.Validator do
         |> cast(object, @fields)
         |> validate_required([:op])
         |> validate_operation(object)
+        |> transform
     end
 
     defp validate_operation(changeset, object) do
         changeset
         |> get_change(:op)
         |> operate(changeset, object)
-        |> transform
     end
     defp operate("defined", changeset, _object) do
         changeset
