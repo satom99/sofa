@@ -140,9 +140,9 @@ defmodule Sofa.Filter.Validator do
         path = changeset
         |> get_change(:path, "")
         |> String.replace("/", ".")
-        |> String.trim
-
-        path = "`#{path}`"
+        |> String.split(".")
+        |> Enum.map(&"`#{&1}`")
+        |> Enum.join(".")
 
         changes = changeset
         |> Map.get(:changes)
