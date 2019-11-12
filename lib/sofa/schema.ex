@@ -2,7 +2,6 @@ defmodule Sofa.Schema do
     @moduledoc """
     Work in progress.
     """
-    alias Ecto.Schema.Metadata
     alias Ecto.Queryable
 
     @doc """
@@ -77,13 +76,13 @@ defmodule Sofa.Schema do
             end
 
             def __struct__(fields) do
-                metadata = %Metadata{
-                    state: :built,
-                    schema: __MODULE__,
-                    source: __schema__(:source),
-                    prefix: __schema__(:prefix)
-                }
                 struct = super(fields)
+                source = __schema__(:source)
+
+                metadata = struct
+                |> Map.get(:__meta__)
+                |> Map.put(:source, source)
+
                 %{struct | __meta__: metadata}
             end
             def __struct__ do
