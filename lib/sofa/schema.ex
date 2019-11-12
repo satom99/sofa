@@ -26,9 +26,9 @@ defmodule Sofa.Schema do
 
             alias Sofa.Filter
 
-            @on_definition {Sofa.Schema, :definition}
             @behaviour Sofa.Schema
-            @derive Jason.Encoder
+            @on_definition {Sofa.Schema, :definition}
+            @derive {Jason.Encoder, except: [:__meta__]}
             @primary_key false
 
             def filter(object, params) do
