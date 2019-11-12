@@ -61,6 +61,17 @@ defmodule Sofa.Schema do
             def __schema__(:source) do
                 __source__()
             end
+            def __schema__(:query) do
+                query = super(:query)
+                source = __schema__(:source)
+                source = {source, __MODULE__}
+
+                from = query
+                |> Map.get(:from)
+                |> Map.put(:source, source)
+
+                %{query | from: from}
+            end
             def __schema__(value) do
                 super(value)
             end
@@ -69,11 +80,11 @@ defmodule Sofa.Schema do
                 metadata = %Metadata{
                     state: :built,
                     schema: __MODULE__,
-                    source: __source__(),
+                    source: __schema__(:source),
                     prefix: __schema__(:prefix)
                 }
                 struct = super(fields)
-                Map.put(struct, :__meta__, metadata)
+                %{struct | __meta__: metadata}
             end
             def __struct__ do
                 __struct__([])
