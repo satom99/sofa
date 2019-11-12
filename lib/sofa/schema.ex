@@ -27,8 +27,10 @@ defmodule Sofa.Schema do
 
             alias Sofa.Filter
 
-            @behaviour Sofa.Schema
             @on_definition {Sofa.Schema, :definition}
+            @behaviour Sofa.Schema
+            @derive Jason.Encoder
+            @primary_key false
 
             def filter(object, params) do
                 fields = __schema__(:fields)
