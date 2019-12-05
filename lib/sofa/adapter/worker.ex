@@ -72,8 +72,12 @@ defmodule Sofa.Worker do
         result = %Result{num_rows: count}
         {:ok, query, result, state}
     end
-    defp result(%{signature: signature, results: results}, query, state) do
+    defp result(%{signature: signature} = response, %{fields: nil} = query, state) do
         fields = Map.keys(signature)
+        query = %{query | fields: fields}
+        result(response, query, state)
+    end
+    defp result(%{results: results}, %{fields: fields} = query, state) do
         values = Enum.map(results, &values(&1, fields))
         result = %Result{
             num_rows: length(values),
