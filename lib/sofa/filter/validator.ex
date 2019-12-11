@@ -31,7 +31,6 @@ defmodule Sofa.Filter.Validator do
     defp validate_operation(changeset, object) do
         changeset
         |> get_change(:op)
-        |> to_string
         |> operate(changeset, object)
     end
     defp operate("defined", changeset, _object) do
@@ -148,11 +147,8 @@ defmodule Sofa.Filter.Validator do
         |> String.to_atom
 
         path = changeset
-        |> get_change(:path, "")
-        |> String.replace("/", ".")
-        |> String.split(".")
-        |> Enum.map(&"`#{&1}`")
-        |> Enum.join(".")
+        |> get_change(:path)
+        |> escape
 
         changes = changeset
         |> Map.get(:changes)
@@ -163,5 +159,16 @@ defmodule Sofa.Filter.Validator do
     end
     defp transform(changeset) do
         changeset
+    end
+
+    defp escape(path) when is_binary(path) and length(path) > 0 do
+        path
+        |> String.replace("/", ".")
+        |> String.split(".")
+        |> Enum.map(&"`#{&1}`")
+        |> Enum.join(".")
+    end
+    defp escape(_path) do
+        ""
     end
 end
