@@ -30,7 +30,6 @@ defmodule Sofa.Filter.Validator do
     defp validate_operation(changeset, object) do
         changeset
         |> get_change(:op)
-        |> to_string
         |> operate(changeset, object)
     end
     defp operate("defined", changeset, _object) do
@@ -65,6 +64,9 @@ defmodule Sofa.Filter.Validator do
     end
     defp operate("any", changeset, object) do
         reduce(changeset, :map, object)
+    end
+    defp operate(nil, changeset, _object) do
+        changeset
     end
     defp operate(code, changeset, _object) do
         add_error(changeset, :op, "unknown operation #{code}")
