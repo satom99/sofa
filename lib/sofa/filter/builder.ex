@@ -119,7 +119,7 @@ defmodule Sofa.Filter.Builder do
         {:{}, [], [:fragment, [], parts]}
     end
 
-    defp update_path(%Filter{path: path} = filter, %Filter{path: ""}) do
+    defp update_path(%Filter{} = filter, %Filter{path: ""}) do
         filter
     end
     defp update_path(%Filter{path: ""} = filter, %Filter{path: parent}) do
