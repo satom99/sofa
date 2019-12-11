@@ -8,6 +8,7 @@ defmodule Sofa.Filter.Validator do
     @base %Filter{}
     @types %{op: :string, path: :string}
     @fields Map.keys(@types)
+    @value ["value", :value]
 
     def cast(object) do
         case validate(object) do
@@ -30,6 +31,7 @@ defmodule Sofa.Filter.Validator do
     defp validate_operation(changeset, object) do
         changeset
         |> get_change(:op)
+        |> to_string
         |> operate(changeset, object)
     end
     defp operate("defined", changeset, _object) do
@@ -75,7 +77,10 @@ defmodule Sofa.Filter.Validator do
     end
 
     defp insert(changeset, object) do
-        input = Map.get(object, "value")
+        input = object
+        |> Map.take(@value)
+        |> Map.values
+        |> List.first
 
         changes = changeset
         |> Map.get(:changes)
