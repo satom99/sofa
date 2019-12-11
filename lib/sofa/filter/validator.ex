@@ -161,7 +161,7 @@ defmodule Sofa.Filter.Validator do
         changeset
     end
 
-    defp escape(path) when is_binary(path) and length(path) > 0 do
+    defp escape(path) when is_binary(path) and byte_size(path) > 0 do
         path
         |> String.replace("/", ".")
         |> String.split(".")
