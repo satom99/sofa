@@ -63,7 +63,9 @@ defmodule Sofa.Filter.Validator do
         reduce(changeset, {:array, :map}, object)
     end
     defp operate("any", changeset, object) do
-        reduce(changeset, :map, object)
+        changeset
+        |> reduce({:array, :map}, object)
+        |> validate_length(:apply, is: 1)
     end
     defp operate(nil, changeset, _object) do
         changeset
