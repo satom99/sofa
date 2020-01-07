@@ -68,7 +68,7 @@ defmodule Sofa.Worker do
         result(body, query, state)
     end
     defp result(%{signature: nil, metrics: metrics}, query, state) do
-        %{mutationCount: count} = metrics
+        count = Map.get(metrics, :mutationCount, 1)
         result = %Result{num_rows: count}
         {:ok, query, result, state}
     end

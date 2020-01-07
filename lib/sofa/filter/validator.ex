@@ -8,6 +8,7 @@ defmodule Sofa.Filter.Validator do
     @base %Filter{}
     @types %{op: :string, path: :string}
     @fields Map.keys(@types)
+    @value ["value", :value]
 
     def cast(object) do
         case validate(object) do
@@ -63,14 +64,22 @@ defmodule Sofa.Filter.Validator do
         reduce(changeset, {:array, :map}, object)
     end
     defp operate("any", changeset, object) do
-        reduce(changeset, :map, object)
+        changeset
+        |> reduce({:array, :map}, object)
+        |> validate_length(:apply, is: 1)
     end
-    defp operate(_code, changeset, _object) do
-        add_error(changeset, :op, "unknown")
+    defp operate(nil, changeset, _object) do
+        changeset
+    end
+    defp operate(code, changeset, _object) do
+        add_error(changeset, :op, "unknown operation #{code}")
     end
 
     defp insert(changeset, object) do
-        input = Map.get(object, "value")
+        input = object
+        |> Map.take(@value)
+        |> Map.values
+        |> List.first
 
         changes = changeset
         |> Map.get(:changes)
@@ -138,11 +147,8 @@ defmodule Sofa.Filter.Validator do
         |> String.to_atom
 
         path = changeset
-        |> get_change(:path, "")
-        |> String.replace("/", ".")
-        |> String.split(".")
-        |> Enum.map(&"`#{&1}`")
-        |> Enum.join(".")
+        |> get_change(:path)
+        |> escape
 
         changes = changeset
         |> Map.get(:changes)
@@ -153,5 +159,16 @@ defmodule Sofa.Filter.Validator do
     end
     defp transform(changeset) do
         changeset
+    end
+
+    defp escape(path) when is_binary(path) and byte_size(path) > 0 do
+        path
+        |> String.replace("/", ".")
+        |> String.split(".")
+        |> Enum.map(&"`#{&1}`")
+        |> Enum.join(".")
+    end
+    defp escape(_path) do
+        ""
     end
 end
