@@ -10,17 +10,21 @@ defmodule Ecto.Adapters.Couchbase.Connection do
         Sofa.child_spec(options)
     end
 
-    def prepare_execute(conn, _name, statement, params, options) do
-        query = %Query{statement: statement}
+    def prepare_execute(conn, _name, query, params, options) do
         DBConnection.prepare_execute(conn, query, params, options)
     end
     def execute(conn, query, params, options) do
         DBConnection.execute(conn, query, params, options)
     end
+    def query(conn, %Query{} = query, params, options) do
+        conn
+        |> prepare_execute(nil, query, params, options)
+        |> result
+    end
     def query(conn, statement, params, options) do
         statement = IO.iodata_to_binary(statement)
-        execution = prepare_execute(conn, nil, statement, params, options)
-        result(execution)
+        query = %Query{statement: statement}
+        query(conn, query, params, options)
     end
     def stream(_conn, _statement, _params, _options) do
         raise "not implemented"

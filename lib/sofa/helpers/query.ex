@@ -2,7 +2,8 @@ defmodule Sofa.Query do
     @moduledoc false
 
     defstruct [
-        :statement
+        :statement,
+        :fields
     ]
 
     defimpl String.Chars do
