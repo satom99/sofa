@@ -22,6 +22,7 @@ defmodule Ecto.Adapters.Couchbase.Connection do
         |> result
     end
     def query(conn, statement, params, options) do
+        statement = IO.iodata_to_binary(statement)
         query = %Query{statement: statement}
         query(conn, query, params, options)
     end
