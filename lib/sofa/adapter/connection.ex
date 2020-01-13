@@ -4,30 +4,29 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     @behaviour Ecto.Adapters.SQL.Connection
 
     alias Ecto.Adapters.MyXQL.Connection
-    alias Sofa.Query
 
     def child_spec(options) do
         Sofa.child_spec(options)
     end
 
-    def prepare_execute(conn, _name, query, params, options) do
-        DBConnection.prepare_execute(conn, query, params, options)
+    def prepare_execute(conn, name, query, params, options) do
+        Sofa.prepare_execute(conn, name, query, params, options)
     end
+
     def execute(conn, query, params, options) do
-        DBConnection.execute(conn, query, params, options)
+        Sofa.execute(conn, query, params, options)
     end
-    def query(conn, %Query{} = query, params, options) do
-        conn
-        |> prepare_execute(nil, query, params, options)
-        |> result
+
+    def query(conn, query, params, options) do
+        Sofa.query(conn, query, params, options)
     end
-    def query(conn, statement, params, options) do
-        statement = IO.iodata_to_binary(statement)
-        query = %Query{statement: statement}
-        query(conn, query, params, options)
+
+    def stream(conn, query, params, options) do
+        Sofa.stream(conn, query, params, options)
     end
-    def stream(_conn, _statement, _params, _options) do
-        raise "not implemented"
+
+    def to_constraints(_error) do
+        []
     end
 
     def all(query) do
@@ -52,10 +51,7 @@ defmodule Ecto.Adapters.Couchbase.Connection do
         values = values(header, length)
         ["UPSERT INTO ", source, " (KEY, VALUE) ", "VALUES ", values]
     end
-    def to_constraints(_term) do
-        []
-    end
-    
+
     def ddl_logs(_term) do
         raise "not implemented"
     end
@@ -64,13 +60,6 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     end
     def table_exists_query(_table) do
         raise "not implemented"
-    end
-
-    defp result({:ok, _query, result}) do
-        {:ok, result}
-    end
-    defp result({:error, _reason} = tuple) do
-        tuple
     end
 
     defp values(header, count) do
