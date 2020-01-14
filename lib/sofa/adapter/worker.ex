@@ -3,7 +3,7 @@ defmodule Sofa.Worker do
 
     use DBConnection
 
-    alias Sofa.{Query, Result}
+    alias Sofa.{Request, Result}
     alias Sofa.API
 
     def connect(options) do
@@ -26,16 +26,16 @@ defmodule Sofa.Worker do
         {:ok, state}
     end
 
-    def handle_prepare(query, _options, state) do
-        {:ok, query, state}
+    def handle_prepare(request, _options, state) do
+        {:ok, request, state}
     end
-    def handle_execute(%Query{statement: statement} = query, params, _options, state) do
+    def handle_execute(%Request{statement: statement} = request, params, _options, state) do
         statement
         |> API.execute(params, state)
-        |> result(query, state)
+        |> result(request, state)
     end
 
-    def handle_close(_query, _options, state) do
+    def handle_close(_request, _options, state) do
         {:ok, nil, state}
     end
 
@@ -51,42 +51,42 @@ defmodule Sofa.Worker do
     def handle_status(_options, _state) do
         raise "not implemented"
     end
-    def handle_declare(_query, _params, _options, _state) do
+    def handle_declare(_request, _params, _options, _state) do
         raise "not implemented"
     end
-    def handle_fetch(_query, _cursor, _options, _state) do
+    def handle_fetch(_request, _cursor, _options, _state) do
         raise "not implemented"
     end
-    def handle_deallocate(_query, _cursor, _options, _state) do
+    def handle_deallocate(_request, _cursor, _options, _state) do
         raise "not implemented"
     end
 
-    defp result({_code, term}, query, state) do
-        result(term, query, state)
+    defp result({_code, term}, request, state) do
+        result(term, request, state)
     end
-    defp result(%{body: body}, query, state) do
-        result(body, query, state)
+    defp result(%{body: body}, request, state) do
+        result(body, request, state)
     end
-    defp result(%{signature: nil, metrics: metrics}, query, state) do
+    defp result(%{signature: nil, metrics: metrics}, request, state) do
         count = Map.get(metrics, :mutationCount, 1)
         result = %Result{num_rows: count}
-        {:ok, query, result, state}
+        {:ok, request, result, state}
     end
-    defp result(%{signature: signature} = response, %{fields: nil} = query, state) do
+    defp result(%{signature: signature} = response, %{fields: nil} = request, state) do
         fields = Map.keys(signature)
-        query = %{query | fields: fields}
-        result(response, query, state)
+        request = %{request | fields: fields}
+        result(response, request, state)
     end
-    defp result(%{results: results}, %{fields: fields} = query, state) do
+    defp result(%{results: results}, %{fields: fields} = request, state) do
         values = Enum.map(results, &values(&1, fields))
         result = %Result{
             num_rows: length(values),
             columns: fields,
             rows: values
         }
-        {:ok, query, result, state}
+        {:ok, request, result, state}
     end
-    defp result(error, _query, state) do
+    defp result(error, _request, state) do
         message = format_error(error)
         {:error, message, state}
     end

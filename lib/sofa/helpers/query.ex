@@ -1,29 +1,32 @@
 defmodule Sofa.Query do
     @moduledoc false
 
-    defstruct [
-        :statement,
-        :fields
-    ]
+    alias Ecto.Query
+    alias Ecto.Query.JoinExpr
 
-    defimpl String.Chars do
-        def to_string(%{statement: statement}) do
-            IO.iodata_to_binary(statement)
+    defmacro nest(query, qualifier, binding \\ [], expression, options \\ []) do
+        quote do
+            query = Query.join(
+                unquote(query),
+                unquote(qualifier),
+                unquote(binding),
+                unquote(expression),
+                unquote(options)
+            )
+            Sofa.Query.nested(query)
         end
     end
-
-    defimpl DBConnection.Query do
-        def parse(query, _options) do
-            query
-        end
-        def describe(query, _options) do
-            query
-        end
-        def encode(_query, params, _options) do
-            params
-        end
-        def decode(_query, result, _options) do
-            result
-        end
+    
+    def nested(%Query{} = query) do
+        Map.update!(query, :joins, &nested/1)
+    end
+    def nested(joins) when is_list(joins) do
+        [join | rest] = Enum.reverse(joins)
+        nested = nested(join)
+        finale = [nested | rest]
+        Enum.reverse(finale)
+    end
+    def nested(%JoinExpr{} = expression) do
+        Map.put(expression, :qual, :nest)
     end
 end

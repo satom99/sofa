@@ -14,7 +14,6 @@ defmodule Sofa.MixProject do
 	defp deps do
 		[
 			{:ecto, ">= 3.1.0"},
-			{:myxql, ">= 0.2.0"},
 			{:jason, ">= 1.0.0"},
 			{:ecto_sql, ">= 3.1.0"},
 			{:httpoison, ">= 0.7.0"},

@@ -1,7 +1,7 @@
 defmodule Sofa do
     @moduledoc false
 
-    alias Sofa.{Query, Worker}
+    alias Sofa.{Request, Worker}
 
     def start_link(options) do
         DBConnection.start_link(Worker, options)
@@ -11,30 +11,30 @@ defmodule Sofa do
         DBConnection.child_spec(Worker, options)
     end
 
-    def prepare_execute(conn, _name, query, params, options) do
-        DBConnection.prepare_execute(conn, query, params, options)
+    def prepare_execute(conn, _name, request, params, options) do
+        DBConnection.prepare_execute(conn, request, params, options)
     end
 
-    def execute(conn, query, params, options) do
-        DBConnection.execute(conn, query, params, options)
+    def execute(conn, request, params, options) do
+        DBConnection.execute(conn, request, params, options)
     end
 
-    def query(conn, %Query{} = query, params, options) do
+    def query(conn, %Request{} = request, params, options) do
         conn
-        |> prepare_execute(nil, query, params, options)
+        |> prepare_execute(nil, request, params, options)
         |> result
     end
     def query(conn, statement, params, options) do
         statement = IO.iodata_to_binary(statement)
-        query = %Query{statement: statement}
-        query(conn, query, params, options)
+        request = %Request{statement: statement}
+        query(conn, request, params, options)
     end
     
-    def stream(_conn, _query, _params, _options) do
+    def stream(_conn, _request, _params, _options) do
         raise "not implemented"
     end
 
-    defp result({:ok, _query, result}) do
+    defp result({:ok, _request, result}) do
         {:ok, result}
     end
     defp result({:error, _reason} = tuple) do

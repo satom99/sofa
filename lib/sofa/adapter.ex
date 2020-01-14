@@ -5,7 +5,7 @@ defmodule Ecto.Adapters.Couchbase do
         driver: :couchbase,
         migration_lock: nil
     ]
-    alias Sofa.Query
+    alias Sofa.Request
 
     def supports_ddl_transaction? do
         false
@@ -21,11 +21,11 @@ defmodule Ecto.Adapters.Couchbase do
         |> Map.get(:fields)
         |> Enum.map(&field/1)
 
-        query = %Query{
+        request = %Request{
             statement: statement,
             fields: fields
         }
-        {:cache, {System.unique_integer([:positive]), query}}
+        {:cache, {System.unique_integer([:positive]), request}}
     end
 
     def insert(adapter, schema, params, conflict, returning, options) do
