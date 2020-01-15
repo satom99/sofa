@@ -12,7 +12,7 @@ defmodule Sofa.Filter do
         :op,
         :value,
         :apply,
-        path: ""
+        :path
     ]
     
     @typedoc """
