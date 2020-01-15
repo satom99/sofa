@@ -12,11 +12,6 @@ defmodule Sofa.API do
         post(url, payload, [], options)
     end
 
-    def format_url(options) do
-        host = Keyword.fetch!(options, :hostname)
-        "http://#{host}:8093/query/service"
-    end
-
     def process_request_body(body) do
         Jason.encode!(body)
     end
@@ -37,5 +32,10 @@ defmodule Sofa.API do
 
     def process_response_body(body) do
         Jason.decode!(body, keys: :atoms)
+    end
+
+    defp format_url(options) do
+        host = Keyword.fetch!(options, :hostname)
+        "http://#{host}:8093/query/service"
     end
 end
