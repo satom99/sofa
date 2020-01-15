@@ -146,29 +146,13 @@ defmodule Sofa.Filter.Validator do
         |> get_change(:op)
         |> String.to_atom
 
-        path = changeset
-        |> get_change(:path)
-        |> escape
-
         changes = changeset
         |> Map.get(:changes)
         |> Map.put(:op, code)
-        |> Map.put(:path, path)
 
         Map.put(changeset, :changes, changes)
     end
     defp transform(changeset) do
         changeset
-    end
-
-    defp escape(path) when is_binary(path) and byte_size(path) > 0 do
-        path
-        |> String.replace("/", ".")
-        |> String.split(".")
-        |> Enum.map(&"`#{&1}`")
-        |> Enum.join(".")
-    end
-    defp escape(_path) do
-        ""
     end
 end
