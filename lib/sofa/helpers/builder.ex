@@ -78,7 +78,7 @@ defmodule Sofa.Builder do
         |> List.flatten
         |> Enum.map(&escape/1)
         |> Enum.intersperse(".")
-        |> Enum.reduce(&escape/2)
+        |> Enum.reduce("", &escape/2)
         |> fragmentize
     end
     def escape(object) when not is_binary(object) do
