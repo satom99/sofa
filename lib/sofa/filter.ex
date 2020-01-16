@@ -49,6 +49,9 @@ defmodule Sofa.Filter do
     @doc """
     Applies a given filter to a query.
     """
+    def apply(query, nil) do
+        query
+    end
     def apply(%Query{} = query, %Filter{} = filter) do
         Builder.apply(query, filter)
     end

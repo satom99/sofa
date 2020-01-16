@@ -23,6 +23,7 @@ defmodule Sofa.Schema do
             use Ecto.Schema
 
             import Ecto.Query
+            import Sofa.Query
 
             alias Sofa.Filter
 
@@ -37,7 +38,6 @@ defmodule Sofa.Schema do
                 filter = params
                 |> Map.new
                 |> Map.get(:filter)
-                |> Filter.build
 
                 clauses = params
                 |> Map.new
@@ -45,8 +45,8 @@ defmodule Sofa.Schema do
                 |> Keyword.new
 
                 object
-                |> where(^filter)
                 |> where(^clauses)
+                |> Filter.apply(filter)
             end
             defoverridable [filter: 2]
         end
