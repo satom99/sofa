@@ -30,7 +30,8 @@ defmodule Sofa.Schema do
             @behaviour Sofa.Schema
             @on_definition {Sofa.Schema, :definition}
             @derive {Jason.Encoder, except: [:__meta__]}
-            @primary_key false
+            @primary_key {:id, :string, []}
+            @foreign_key_type :string
 
             def filter(object, params) do
                 fields = __schema__(:fields)
