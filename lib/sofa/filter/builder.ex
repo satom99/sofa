@@ -80,7 +80,7 @@ defmodule Sofa.Filter.Builder do
     end
     defp process(%Filter{op: :any, path: path, apply: [filter]} = parent) do
         alias = reference()
-        scoped = [handle]
+        scoped = [alias]
         parent = %{parent | path: scoped}
         filter = scoped(filter, parent)
 
