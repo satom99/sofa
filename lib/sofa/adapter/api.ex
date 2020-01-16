@@ -27,7 +27,8 @@ defmodule Sofa.API do
         username = Keyword.fetch!(options, :username)
         password = Keyword.fetch!(options, :password)
         hackney = [basic_auth: {username, password}]
-        [{:hackney, hackney} | options]
+        timeout = {:recv_timeout, options[:timeout]}
+        [{:hackney, hackney}, timeout | options]
     end
 
     def process_response_body(body) do
