@@ -3,7 +3,7 @@ defmodule Sofa.Request do
 
     defstruct [
         :statement,
-        :fields
+        :signature
     ]
 
     defimpl String.Chars do

@@ -72,16 +72,16 @@ defmodule Sofa.Worker do
         result = %Result{num_rows: count}
         {:ok, request, result, state}
     end
-    defp result(%{signature: signature} = response, %{fields: nil} = request, state) do
-        fields = Map.keys(signature)
-        request = %{request | fields: fields}
+    defp result(%{signature: signature} = response, %Request{signature: nil} = request, state) do
+        signature = Map.keys(signature)
+        request = %{request | signature: signature}
         result(response, request, state)
     end
-    defp result(%{results: results}, %{fields: fields} = request, state) do
-        values = Enum.map(results, &values(&1, fields))
+    defp result(%{results: results}, %Request{signature: signature} = request, state) do
+        values = Enum.map(results, &values(&1, signature))
         result = %Result{
             num_rows: length(values),
-            columns: fields,
+            columns: signature,
             rows: values
         }
         {:ok, request, result, state}
@@ -91,8 +91,8 @@ defmodule Sofa.Worker do
         {:error, message, state}
     end
 
-    defp values(object, fields) do
-        Enum.map(fields, &Map.get(object, &1))
+    defp values(object, signature) do
+        Enum.map(signature, &Map.get(object, &1))
     end
 
     defp format_error(%{errors: errors}) do
