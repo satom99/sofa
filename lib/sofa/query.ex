@@ -3,7 +3,6 @@ defmodule Sofa.Query do
 
     alias Ecto.Query
     alias Ecto.Query.JoinExpr
-    alias Sofa.Filter
 
     defmacro nest(query, qualifier, binding \\ [], expression, options \\ []) do
         quote do
