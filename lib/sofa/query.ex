@@ -5,10 +5,6 @@ defmodule Sofa.Query do
     alias Ecto.Query.JoinExpr
     alias Sofa.Filter
 
-    def filter(%Query{} = query, %Filter{} = filter) do
-        Filter.apply(query, filter)
-    end
-
     defmacro nest(query, qualifier, binding \\ [], expression, options \\ []) do
         quote do
             query = Query.join(
