@@ -52,11 +52,6 @@ defmodule Ecto.Adapters.Couchbase.Connection do
     alias Ecto.Query.{BooleanExpr, JoinExpr, QueryExpr, WithExpr}
 
     def all(query) do
-        query = query
-        |> Map.from_struct
-
-        IO.inspect {:connection, query}
-
       sources = create_names(query)
 
       cte = cte(query, sources)
