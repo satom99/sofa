@@ -12,18 +12,31 @@ defmodule Ecto.Adapters.Couchbase do
     end
 
     def prepare(operation, query) do
-        statement = @conn
-        |> apply(operation, [query])
-        |> IO.iodata_to_binary
-
-        fields = query
+        signature = query
         |> Map.get(:select)
         |> Map.get(:fields)
         |> Enum.map(&field/1)
 
+        fields = query
+        |> Map.get(:select)
+        |> Map.get(:fields)
+        |> Enum.uniq_by(&uniqueness/1)
+
+        select = query
+        |> Map.get(:select)
+        |> Map.put(:fields, fields)
+
+        query = query
+        |> Map.put(:select, select)
+        |> Map.put(:tampered, true)
+
+        statement = @conn
+        |> apply(operation, [query])
+        |> IO.iodata_to_binary
+
         request = %Request{
             statement: statement,
-            fields: fields
+            signature: signature
         }
         {:cache, {System.unique_integer([:positive]), request}}
     end
@@ -44,7 +57,19 @@ defmodule Ecto.Adapters.Couchbase do
         |> Enum.concat(params)
     end
 
-    defp field({{_one, _two, [_three, name]}, _four, _five}) do
-        name
+    defp field(expression) do
+        expression
+        |> expand
+        |> List.last
+    end
+    defp uniqueness(expression) do
+        expand(expression)
+    end
+
+    defp expand({:., _context, arguments}) do
+        arguments
+    end
+    defp expand({tuple, _context, _arguments}) do
+        expand(tuple)
     end
 end
