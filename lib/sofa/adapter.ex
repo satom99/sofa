@@ -62,6 +62,7 @@ defmodule Ecto.Adapters.Couchbase do
         |> expand
         |> List.last
     end
+    
     defp uniqueness(expression) do
         expand(expression)
     end

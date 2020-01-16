@@ -54,21 +54,6 @@ defmodule Sofa.Builder do
     end
 
     @doc """
-    Injects raw variables within a fragment.
-    """
-    @spec dynamo(term, term) :: DynamicExpr.t
-
-    defmacro dynamo(binding, fragment) do
-        binding = binding
-        |> Map.new
-        |> zipper
-        
-        []
-        |> Dynamic.build(fragment, __CALLER__)
-        |> Macro.postwalk(&binder(&1, binding))
-    end
-
-    @doc """
     Escapes a given path at runtime.
     """
     @spec escape(term) :: String.t
@@ -87,8 +72,20 @@ defmodule Sofa.Builder do
     def escape(string) when byte_size(string) > 0 do
         "`#{string}`"
     end
-    defp escape(object, previous) do
-        concat(previous, object)
+
+    @doc """
+    Injects raw variables within a fragment.
+    """
+    @spec dynamo(term, term) :: DynamicExpr.t
+
+    defmacro dynamo(binding, fragment) do
+        binding = binding
+        |> Map.new
+        |> zipper
+        
+        []
+        |> Dynamic.build(fragment, __CALLER__)
+        |> Macro.postwalk(&binder(&1, binding))
     end
 
     defp binder({:raw, statement}, binding) when byte_size(statement) > 0 do
@@ -103,7 +100,7 @@ defmodule Sofa.Builder do
         tree = tree
         |> concat(ending)
         |> fragmentize
-        |> escape_once
+        |> wrapped
 
         {:expr, tree}
     end
@@ -124,7 +121,7 @@ defmodule Sofa.Builder do
         |> concat(before)
         |> concat(bind)
         |> fragmentize
-        |> escape_once
+        |> wrapped
 
         {caret, tree}
     end
@@ -158,10 +155,15 @@ defmodule Sofa.Builder do
         previous
     end
     
+    defp escape(object, previous) do
+        concat(previous, object)
+    end
+    
     defp fragmentize(parts) do
         {:fragment, [], parts}
     end
-    defp escape_once(execution) do
+
+    defp wrapped(execution) do
         execution = Tuple.to_list(execution)
         {:{}, [], execution}
     end
