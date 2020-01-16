@@ -2,133 +2,17 @@ defmodule Sofa.Filter.Builder do
     @moduledoc false
 
     import Ecto.Query
+    import Sofa.Builder
 
-    alias Ecto.Query.Builder.Dynamic
+    alias Ecto.Query
     alias Sofa.Filter
 
-    @boundaries ~r/%{([a-z]*)}/
+    def apply(%Query{} = query, %Filter{} = filter) do
+        clauses = filter
+        |> names(query)
+        |> process
 
-    def build(nil) do
-        []
-    end
-    def build(%Filter{} = filter) do
-        process(filter)
-    end
-
-    defmacrop dynamo(binding, fragment) do
-        values = Keyword.values(binding)
-
-        binding = binding
-        |> Keyword.keys
-        |> Enum.map(&to_string/1)
-        |> Enum.zip(values)
-        |> Map.new
-
-        []
-        |> Dynamic.build(fragment, __CALLER__)
-        |> Macro.postwalk(&binder(&1, binding))
-    end
-
-    defp binder({:raw, ""} = tuple, _binding) do
-        tuple
-    end
-    defp binder({:raw, statement}, binding) do
-        {caret, tree} = @boundaries
-        |> Regex.scan(statement, return: :index)
-        |> Enum.reduce({0, ""}, &reduce(&1, &2, statement, binding))
-
-        length = byte_size(statement)
-        offset = length - caret
-        finale = binary_part(statement, caret, offset)
-
-        tree = []
-        |> insert(tree)
-        |> insert(finale)
-        |> fragmentize
-
-        {:expr, tree}
-    end
-    defp binder(term, _binding) do
-        term
-    end
-
-    defp reduce([match, capture], {caret, tree}, statement, binding) do
-        {start, length} = match
-        offset = start - caret
-        before = binary_part(statement, caret, offset)
-        caret = start + length
-
-        {start, length} = capture
-        name = binary_part(statement, start, length)
-        param = Map.fetch!(binding, name)
-
-        root = quote do &0 end
-        root = Macro.escape(root)
-
-        scoped = param
-        |> scope(root)
-        |> fragmentize
-
-        tree = []
-        |> insert(tree)
-        |> insert(before)
-        |> insert(scoped)
-        |> fragmentize
-
-        {caret, tree}
-    end
-
-    defp insert(parts, kind, item) do
-        parts ++ [{kind, item}]
-    end
-    defp insert(parts, item) when not is_binary(item) do
-        insert(parts, :expr, item)
-    end
-    defp insert(parts, item) when byte_size(item) > 0 do
-        insert(parts, :raw, item)
-    end
-    defp insert(parts, _item) do
-        parts
-    end
-    defp scope({:path, _meta, _arguments} = param, root) do
-        quote do
-            root = unquote(root)
-            param = unquote(param)
-            param = List.wrap(param)
-            first = List.first(param)
-
-            if first == :scoped do
-                param = param
-                |> Enum.drop(1)
-                |> Enum.join(".")
-
-                [raw: param]
-            else
-                param = Enum.join(param, ".")
-                []
-                |> insert(root)
-                |> insert(".")
-                |> insert(:raw, param)
-            end
-        end
-    end
-    defp scope(param, _root) do
-        [raw: param]
-    end
-    defp fragmentize(parts) do
-        {:{}, [], [:fragment, [], parts]}
-    end
-
-    defp update_path(%Filter{} = filter, %Filter{path: ""}) do
-        filter
-    end
-    defp update_path(%Filter{path: ""} = filter, %Filter{path: parent}) do
-        %{filter | path: parent}
-    end
-    defp update_path(%Filter{path: path} = filter, %Filter{path: parent}) do
-        parent = List.wrap(parent)
-        finale = parent ++ [path]
-        %{filter | path: finale}
+        where(query, ^clauses)
     end
 
     defp process(%Filter{op: :defined, path: path}) do
@@ -178,35 +62,31 @@ defmodule Sofa.Filter.Builder do
             ^value
         )
     end
-    defp process(%Filter{op: :and, apply: [object | list]} = parent) do
-        parent = %{parent | apply: list}
-        object = update_path(object, parent)
-        dynamic ^process(object) and ^process(parent)
+    defp process(%Filter{op: :and, apply: [filter | rest]} = parent) do
+        parent = %{parent | apply: rest}
+        filter = scoped(filter, parent)
+        dynamic ^process(filter) and ^process(parent)
     end
     defp process(%Filter{op: :and, apply: []}) do
         dynamic fragment("true")
     end
-    defp process(%Filter{op: :or, apply: [object | list]} = parent) do
-        parent = %{parent | apply: list}
-        object = update_path(object, parent)
-        dynamic ^process(object) or ^process(parent)
+    defp process(%Filter{op: :or, apply: [filter | rest]} = parent) do
+        parent = %{parent | apply: rest}
+        filter = scoped(filter, parent)
+        dynamic ^process(filter) or ^process(parent)
     end
     defp process(%Filter{op: :or, apply: []}) do
         dynamic fragment("false")
     end
-    defp process(%Filter{op: :any, path: path, apply: [object]} = parent) do
-        reference = make_ref()
-        |> :erlang.ref_to_list
-        |> to_string
-
-        escape = "`#{reference}`"
-        scoped = [:scoped, escape]
+    defp process(%Filter{op: :any, path: path, apply: [filter]} = parent) do
+        alias = reference()
+        scoped = [handle]
         parent = %{parent | path: scoped}
-        object = update_path(object, parent)
+        filter = scoped(filter, parent)
 
-        dynamo [path: path, alias: escape], fragment(
+        dynamo [path: path, alias: alias], fragment(
             "ANY %{alias} IN %{path} SATISFIES ? END",
-            ^process(object)
+            ^process(filter)
         )
     end
 end

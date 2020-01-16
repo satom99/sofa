@@ -6,12 +6,12 @@ defmodule Sofa.Filter.Validator do
     alias Sofa.Filter
 
     @base %Filter{}
+    @apply {:array, :map}
     @types %{op: :string, path: :string}
     @fields Map.keys(@types)
-    @value ["value", :value]
 
     def cast(object) do
-        case validate(object) do
+        case process(object) do
             %{valid?: true} = changeset ->
                 filter = apply_changes(changeset)
                 {:ok, filter}
@@ -20,66 +20,62 @@ defmodule Sofa.Filter.Validator do
         end
     end
 
-    defp validate(object) do
+    defp process(object) do
         {@base, @types}
         |> cast(object, @fields)
-        |> validate_required([:op])
-        |> validate_operation(object)
+        |> validate_required(:op)
+        |> validate_operation
         |> transform
     end
 
-    defp validate_operation(changeset, object) do
+    defp validate_operation(changeset) do
         changeset
         |> get_change(:op)
-        |> operate(changeset, object)
+        |> operate(changeset)
     end
-    defp operate("defined", changeset, _object) do
+    defp operate("defined", changeset) do
         changeset
     end
-    defp operate("less", changeset, object) do
-        insert(changeset, object)
+    defp operate("less", changeset) do
+        insert(changeset)
     end
-    defp operate("more", changeset, object) do
-        insert(changeset, object)
+    defp operate("more", changeset) do
+        insert(changeset)
     end
-    defp operate("matches", changeset, object) do
-        update(changeset, :string, object)
+    defp operate("matches", changeset) do
+        update(changeset, :string)
     end
-    defp operate("contains", changeset, object) do
-        update(changeset, :string, object)
+    defp operate("contains", changeset) do
+        update(changeset, :string)
     end
-    defp operate("starts", changeset, object) do
-        update(changeset, :string, object)
+    defp operate("starts", changeset) do
+        update(changeset, :string)
     end
-    defp operate("ends", changeset, object) do
-        update(changeset, :string, object)
+    defp operate("ends", changeset) do
+        update(changeset, :string)
     end
-    defp operate("test", changeset, object) do
-        insert(changeset, object)
+    defp operate("test", changeset) do
+        insert(changeset)
     end
-    defp operate("and", changeset, object) do
-        reduce(changeset, {:array, :map}, object)
+    defp operate("and", changeset) do
+        reduce(changeset)
     end
-    defp operate("or", changeset, object) do
-        reduce(changeset, {:array, :map}, object)
+    defp operate("or", changeset) do
+        reduce(changeset)
     end
-    defp operate("any", changeset, object) do
+    defp operate("any", changeset) do
         changeset
-        |> reduce({:array, :map}, object)
+        |> reduce
         |> validate_length(:apply, is: 1)
     end
-    defp operate(nil, changeset, _object) do
-        changeset
-    end
-    defp operate(code, changeset, _object) do
-        add_error(changeset, :op, "unknown operation #{code}")
+    defp operate(code, changeset) do
+        add_error(changeset, :op, "unknown operation `#{code}`")
     end
 
-    defp insert(changeset, object) do
-        input = object
-        |> Map.take(@value)
-        |> Map.values
-        |> List.first
+    defp insert(changeset) do
+        input = changeset
+        |> Map.get(:params)
+        |> Map.get("value")
 
         changes = changeset
         |> Map.get(:changes)
@@ -92,53 +88,61 @@ defmodule Sofa.Filter.Validator do
         changeset
         |> Map.put(:types, types)
         |> Map.put(:changes, changes)
-        |> validate_required([:value])
+        |> validate_required(:value)
     end
-    defp update(changeset, type, object) do
+    defp update(changeset, type) do
         types = changeset
         |> Map.get(:types)
         |> Map.put(:value, type)
 
+        params = changeset
+        |> Map.get(:params)
+        |> Map.take(["value"])
+
         changeset
         |> Map.put(:types, types)
-        |> cast(object, [:value])
-        |> validate_required([:value])
+        |> cast(params, [:value])
+        |> validate_required(:value)
     end
-    defp reduce(changeset, type, object) do
+    defp reduce(changeset) do
         types = changeset
         |> Map.get(:types)
-        |> Map.put(:apply, type)
+        |> Map.put(:apply, @apply)
+
+        params = changeset
+        |> Map.get(:params)
+        |> Map.take(["apply"])
 
         changeset = changeset
         |> Map.put(:types, types)
-        |> cast(object, [:apply])
-        |> validate_required([:apply])
+        |> cast(params, [:apply])
+        |> validate_required(:apply)
 
-        if changeset.valid? do
-            children = changeset
-            |> get_change(:apply)
-            |> List.wrap
-            |> Enum.map(&validate/1)
+        children = changeset
+        |> get_change(:apply, [])
+        |> Enum.map(&process/1)
 
-            errors = children
-            |> Enum.map(& &1.errors)
-            |> List.flatten
+        errors = children
+        |> Enum.concat([changeset])
+        |> Enum.map(& &1.errors)
+        |> List.flatten
 
-            count = length(errors)
+        valid? = errors
+        |> Kernel.length
+        |> Kernel.==(0)
 
-            children = Enum.map(children, &apply_changes/1)
+        children = children
+        |> Enum.map(&apply_changes/1)
+        |> List.wrap
 
-            changes = changeset
-            |> Map.get(:changes)
-            |> Map.put(:apply, children)
+        changes = changeset
+        |> Map.get(:changes)
+        |> Map.put(:apply, children)
 
-            changeset
-            |> Map.put(:errors, errors)
-            |> Map.put(:valid?, count < 1)
-            |> Map.put(:changes, changes)
-        else
-            changeset
-        end
+        changeset
+        |> Map.put(:errors, errors)
+        |> Map.put(:valid?, valid?)
+        |> Map.put(:changes, changes)
     end
 
     defp transform(%{valid?: true} = changeset) do
@@ -146,9 +150,15 @@ defmodule Sofa.Filter.Validator do
         |> get_change(:op)
         |> String.to_atom
 
+        path = changeset
+        |> get_change(:path, "")
+        |> String.replace("/", ".")
+        |> String.split(".")
+
         changes = changeset
         |> Map.get(:changes)
         |> Map.put(:op, code)
+        |> Map.put(:path, path)
 
         Map.put(changeset, :changes, changes)
     end

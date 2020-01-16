@@ -3,6 +3,11 @@ defmodule Sofa.Query do
 
     alias Ecto.Query
     alias Ecto.Query.JoinExpr
+    alias Sofa.Filter
+
+    def filter(%Query{} = query, %Filter{} = filter) do
+        Filter.apply(query, filter)
+    end
 
     defmacro nest(query, qualifier, binding \\ [], expression, options \\ []) do
         quote do
@@ -16,7 +21,7 @@ defmodule Sofa.Query do
             Sofa.Query.nested(query)
         end
     end
-    
+
     def nested(%Query{} = query) do
         Map.update!(query, :joins, &nested/1)
     end
