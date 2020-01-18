@@ -44,7 +44,7 @@ defmodule Sofa.Response do
        |> cast_embed(embed, with: &changeset/2)
        |> changeset(embeds)
     end
-    defp changeset(struct, _embeds) do
+    defp changeset(struct, []) do
         struct
     end
 end
