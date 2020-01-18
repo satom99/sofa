@@ -4,7 +4,7 @@ defmodule Sofa.Worker do
     use DBConnection
 
     alias Sofa.{Request, Result}
-    alias Sofa.API
+    alias Sofa.{API, Response}
 
     def connect(options) do
         {:ok, options}
@@ -61,28 +61,27 @@ defmodule Sofa.Worker do
         raise "not implemented"
     end
 
-    defp result({_code, term}, request, state) do
-        result(term, request, state)
+    defp result({_code, struct}, request, state) do
+        result(struct, request, state)
     end
     defp result(%{body: body}, request, state) do
         result(body, request, state)
     end
-    defp result(%{signature: nil, metrics: metrics}, request, state) do
+    defp result(%Response{signature: nil, metrics: metrics}, request, state) do
         count = Map.get(metrics, :mutationCount, 1)
         result = %Result{num_rows: count}
         {:ok, request, result, state}
     end
-    defp result(%{signature: signature} = response, %Request{signature: nil} = request, state) do
+    defp result(%Response{signature: signature} = response, %Request{signature: nil} = request, state) do
         signature = Map.keys(signature)
         request = %{request | signature: signature}
         result(response, request, state)
     end
-    defp result(%{results: results}, %Request{signature: signature} = request, state) do
-        values = Enum.map(results, &values(&1, signature))
+    defp result(%Response{results: results}, %Request{signature: signature} = request, state) do
         result = %Result{
-            num_rows: length(values),
-            columns: signature,
-            rows: values
+            num_rows: length(results),
+            rows: values(results, signature),
+            columns: signature
         }
         {:ok, request, result, state}
     end
@@ -91,11 +90,14 @@ defmodule Sofa.Worker do
         {:error, message, state}
     end
 
+    defp values(results, signature) when is_list(results) do
+        Enum.map(results, &values(&1, signature))
+    end
     defp values(object, signature) do
         Enum.map(signature, &Map.get(object, &1))
     end
 
-    defp format_error(%{errors: errors}) do
+    defp format_error(%Response{errors: errors}) do
         errors
         |> Enum.map(&format_error/1)
         |> Enum.join("\n")
@@ -106,7 +108,7 @@ defmodule Sofa.Worker do
     defp format_error(%{reason: reason}) do
         format_error(reason)
     end
-    defp format_error(term) do
-        inspect(term)
+    defp format_error(object) do
+        inspect(object)
     end
 end

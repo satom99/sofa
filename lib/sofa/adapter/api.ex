@@ -3,6 +3,8 @@ defmodule Sofa.API do
 
     use HTTPoison.Base
 
+    alias Sofa.Response
+
     def execute(statement, params, options) do
         payload = %{
             args: params,
@@ -32,7 +34,9 @@ defmodule Sofa.API do
     end
 
     def process_response_body(body) do
-        Jason.decode!(body, keys: :atoms)
+        body
+        |> Jason.decode!
+        |> Response.new
     end
 
     defp format_url(options) do
