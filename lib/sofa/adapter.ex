@@ -84,7 +84,6 @@ defmodule Ecto.Adapters.Couchbase do
 
     defp aliasing(expression, processed) do
         uniqueness = uniqueness(expression)
-        IO.inspect {uniqueness, processed}
         expression = unless uniqueness in processed do
             expression
         else
