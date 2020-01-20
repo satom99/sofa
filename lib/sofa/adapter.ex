@@ -82,16 +82,6 @@ defmodule Ecto.Adapters.Couchbase do
         {[unique | uniques], [expression | expressions]}
     end
 
-    defp aliasing(expression, processed) do
-        uniqueness = uniqueness(expression)
-        expression = unless uniqueness in processed do
-            expression
-        else
-            {reference(), expression}
-        end
-        [expression | processed]
-    end
-
     defp signature(%Query{select: nil}) do
         []
     end
