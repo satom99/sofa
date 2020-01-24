@@ -78,12 +78,12 @@ defmodule Sofa.Builder do
     """
     @spec dynamo(term, term) :: DynamicExpr.t
 
-    defmacro dynamo(binding, fragment) do
+    defmacro dynamo(binding, aliases \\ [], fragment) do
         binding = binding
         |> Map.new
         |> zipper
         
-        []
+        aliases
         |> Dynamic.build(fragment, __CALLER__)
         |> Macro.postwalk(&binder(&1, binding))
     end
