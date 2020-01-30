@@ -396,7 +396,7 @@ defmodule Ecto.Adapters.Couchbase.Connection do
 
     defp expr({:in, _, [left, right]}, sources, query) when is_list(right) do
       args = intersperse_map(right, ?,, &expr(&1, sources, query))
-      [expr(left, sources, query), " IN (", args, ?)]
+      [expr(left, sources, query), " IN [", args, ?]]
     end
 
     defp expr({:in, _, [_, {:^, _, [_, 0]}]}, _sources, _query) do
@@ -405,7 +405,7 @@ defmodule Ecto.Adapters.Couchbase.Connection do
 
     defp expr({:in, _, [left, {:^, _, [_, length]}]}, sources, query) do
       args = Enum.intersperse(List.duplicate(??, length), ?,)
-      [expr(left, sources, query), " IN (", args, ?)]
+      [expr(left, sources, query), " IN [", args, ?]]
     end
 
     defp expr({:in, _, [left, right]}, sources, query) do
