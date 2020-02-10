@@ -23,6 +23,7 @@ defmodule Sofa.Builder do
     end
     def names(%{path: [source | rest]} = predicate, %Query{aliases: aliases}) do
         source = handle(aliases, source)
+        source = List.flatten(source)
         finale = [source | rest]
         %{predicate | path: finale}
     end
@@ -60,7 +61,6 @@ defmodule Sofa.Builder do
 
     def escape(parts) when is_list(parts) do
         parts
-        |> List.flatten
         |> Enum.map(&escape/1)
         |> Enum.intersperse(".")
         |> Enum.reduce("", &escape/2)
